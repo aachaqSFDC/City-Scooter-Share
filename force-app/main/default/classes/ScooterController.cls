@@ -11,13 +11,6 @@ public with sharing class ScooterController {
         return availableScooters;
     }
 
-
-    @AuraEnabled(cacheable=true)
-    public static LwcApexResponse searchScooters(String depotLocation, DateTime checkInTime, DateTime checkOutTime) {
-
-        return ;
-    }
-
     /**
      * @description check the scooter pricing
      * @param Id ScooterId
@@ -31,7 +24,7 @@ public with sharing class ScooterController {
             lwcResponse.isSuccess = true;
             lwcResponse.response = 12345;
         } catch (Exception e) {
-            lwcResponse.error = new LwcApexError('there was an issue here ', System.Label.exception_error);
+            lwcResponse.error = new LwcApexError('there was an issue here ', 'callout exception');
         }
         return lwcResponse;
     }
