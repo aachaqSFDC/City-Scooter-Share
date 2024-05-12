@@ -10,7 +10,7 @@ public with sharing class ScooterController {
         List<Asset> availableScooters = [SELECT Id, Name FROM Asset WHERE AssetType__c = 'Scooter' ];
         return availableScooters;
     }
-
+  
     /**
      * @description check the scooter pricing
      * @param Id ScooterId
