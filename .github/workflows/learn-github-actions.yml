@@ -1,13 +1,72 @@
-name: learn-github-actions
-run-name: ${{ github.actor }} is learning GitHub Actions
-on: [push]
+name: Pull Request Validation
+
+on:
+  pull_request:
+    branches: [ "developer", "integration", "main" ]
+    types: [opened, edited, synchronize, reopened]
+
 jobs:
-  check-bats-version:
+  PR_Title_Check:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: List PR context attributes #simple output for debugging when necessary
+        uses: actions/github-script@v6
         with:
-          node-version: '20'
-      - run: npm install -g bats
-      - run: bats -v
+          script: console.log(context)
+
+      - name: Check Pull Request Title
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const title = context.payload.pull_request.title;
+            const regex = /^[A-Z]{2,}-[0-9]{1,}\s|^\[BACK(\s?)MERGE]\s.*|^Revert(s?)\s.*/;
+            const isValid = regex.test(title);
+            
+            core.info(`PR Title: "${title}"\n PR Title RegEx: "${regex}"\nPR isValid: "${isValid}"`);
+
+            if (!isValid) {
+
+              const summary = 'Pull request title does not meet requirements for Squash commit branches!!';
+
+              const explaining = `
+              PR Title is already a template for the "Squash Commit".
+              If PR Title matches the requirements, final commit message will follow these requirements.
+              
+              Allowed and valid PR Titles:
+
+              1. Starts with Jira-Issue:
+
+                e.g. "BR-5495 [RM] PR title check for squash commit target branches"
+
+                  - have to start with Jira-Issue-ID  e.g. "BR-12" or "MU-9876" or "PTB-4711"
+                  - a blank after Jira-Issue-ID
+                  - NO other Chararacters "#" or "[" around the Jira-Issue
+
+              2. Starts with "Revert <what ever next>" or "Reverts <what ever next>"
+                - default git revert commit message will allways meet the requierements
+
+              3. Starts with "[BACKMERGE]" or "[BACK MERGE]" # for RM purposes
+                - all letters in CAPITAL
+
+
+              NOT allowed anymore: "NO-TICKET" | "NO TICKET"
+                - check toplevel Readme.md in salesforce repo
+                - check Pull-Request template
+              `
+
+              const text = `Title: ${title}`;
+              core.setFailed(
+                `PR Title validation failed!! - ${summary}
+                ${explaining}
+                `
+              );
+              return;
+            }
+
+
+
+
+
+
